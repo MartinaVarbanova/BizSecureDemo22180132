@@ -1,0 +1,36 @@
+using BizSecureDemo.Data;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+
+namespace BizSecureDemo.Controllers;
+
+[Authorize]
+public class HomeController : Controller
+{
+    private readonly AppDbContext _db;
+    public HomeController(AppDbContext db) => _db = db;
+
+    public async Task<IActionResult> Index()
+    {
+        var uid = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        // Gets the Id from the user that is logged in
+
+        var myOrders = await _db.Orders
+            .Where(o => o.UserId == uid)
+            .OrderByDescending(o => o.Id)
+            .ToListAsync();
+        // Reads orders from the database according to the logged in user
+
+        var allOrders = await _db.Orders
+            .OrderByDescending(o => o.Id)
+            .ToListAsync();
+        // Reads all orders from the database
+
+        ViewBag.AllOrders = allOrders;
+        // Submits all orders to the View through the ViewBag (public orders)
+
+        return View(myOrders);
+    }
+}
